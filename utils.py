@@ -7,46 +7,26 @@ import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
 from torch import Tensor
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, MNIST
 
-DATA_ROOT = "./dataset"
+from models import MnistNet, CifarNet
+torch.manual_seed(0)
+
+DATA_ROOT = "./datasets"
 DEVICE = 'mps'
 
-class Net(nn.Module):
-    """Simple CNN adapted from 'PyTorch: A 60 Minute Blitz'."""
-
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.bn1 = nn.BatchNorm2d(6)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.bn2 = nn.BatchNorm2d(16)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.bn3 = nn.BatchNorm1d(120)
-        self.fc2 = nn.Linear(120, 84)
-        self.bn4 = nn.BatchNorm1d(84)
-        self.fc3 = nn.Linear(84, 10)
-
-    # pylint: disable=arguments-differ,invalid-name
-    def forward(self, x):
-        """Compute forward pass."""
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.bn3(self.fc1(x)))
-        x = F.relu(self.bn4(self.fc2(x)))
-        x = self.fc3(x)
-        return x
 
 def load_data():
     transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+        [transforms.ToTensor(), 
+        transforms.Normalize((0.1307, ), (0.3081))
+        # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ]
     )
-    trainset = CIFAR10(DATA_ROOT, train=True, download=True, transform=transform)
+    trainset = MNIST(DATA_ROOT, train=True, download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)
 
-    testset = CIFAR10(DATA_ROOT, train=False, download=True, transform=transform)
+    testset = MNIST(DATA_ROOT, train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=True)
 
     return trainloader, testloader
@@ -56,7 +36,10 @@ def load_partition(cid, data_dir='./dataset/'):
 
     trainset = torch.load(filename)
     X_train = torch.Tensor(trainset[0])
-    X_train = X_train.permute(0, 3, 1, 2)
+    if len(X_train.shape) < 4:
+        X_train = torch.unsqueeze(X_train, 1)
+    X_train = torch.tensor(X_train).type(torch.FloatTensor)
+    # X_train = X_train.permute(0, 3, 1, 2)
     y_train = torch.Tensor(trainset[1]).type(torch.LongTensor)
     trainset = torch.utils.data.TensorDataset(X_train, y_train)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=32)
@@ -71,8 +54,7 @@ def train(net, trainloader, epochs, device, lr, cur_epoch=1):
     criterion = nn.CrossEntropyLoss()
     optim = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
 
-    net.to(device)
-    net.train()
+    net.to(device).train()
     for epoch in tqdm(range(cur_epoch, cur_epoch + epochs)):
         total, correct = 0, 0
         epoch_acc, epoch_loss = 0.0, 0.0
@@ -118,7 +100,7 @@ def test(net, testloader, device):
 if __name__ == '__main__':
     trainloader, testloader = load_data()
     # trainloader = load_partition(cid=1)
-    model = Net()
+    model = MnistNet()
     print("Start Training")
     freq = 5
     epochs = 10

@@ -5,7 +5,8 @@ import flwr as fl
 from collections import OrderedDict
 
 from numpy import partition
-from utils import train, test, load_partition, Net
+from models import MnistNet
+from utils import train, test, load_partition
 import torch
 import argparse
 import numpy as np
@@ -44,14 +45,14 @@ class FlowerClient(fl.client.NumPyClient):
         print(f"Client {self.cid} is training")
         self.set_parameters(params)
         train(self.model, self.trainloader, 
-            config["num_epochs"], config["lr"], DEVICE)
+            config["num_epochs"], DEVICE, config["optim_lr"])
         return self.get_parameters(), len(self.trainloader.dataset), {}
 
     def evaluate(self, params, config):
-        print(f"Client {self.cid} evaluated on test set")
+        # print(f"Client {self.cid} evaluated on test set")
         self.set_parameters(params)
         loss, acc, num_samples = test(self.model, self.testloader, device=DEVICE)
-        print(f"Test acc: {acc} | num_samples: {num_samples}")
+        # print(f"Test acc: {acc} | num_samples: {num_samples}")
         return float(loss), num_samples, {"accuracy": float(acc)}
 
 if __name__ == '__main__':
@@ -62,15 +63,19 @@ if __name__ == '__main__':
         required=True,
         help="client id"
     )
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        required=True
+    )
     args = parser.parse_args()
 
     # Load data
     # trainloader, testloader = load_data()
-    trainloader, testloader = load_partition(args.cid, data_dir='./dataset/fl_cifar10_noniid/') 
+    trainloader, testloader = load_partition(args.cid, data_dir=args.data_dir) 
     
     # Load model
-    model = Net().to(DEVICE).train()
-    
+    model = MnistNet()
     # Start client
     client = FlowerClient(args.cid, model, trainloader, testloader)
     fl.client.start_numpy_client(DEFAULT_SERVER_ADDRESS, client)

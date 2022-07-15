@@ -1,46 +1,36 @@
+import argparse
+from ast import parse
 import os
 from pathlib import Path
 from threading import local
+from venv import create
 import torch
 import torchvision
 import numpy as np
 from torch.utils.data import Dataset
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, MNIST
 
 from utils import DATA_ROOT, load_data
-PARTITIONS_PATH = './dataset/fl_cifar10'
+PARTITIONS_PATH = './datasets/fl_mnist'
 
-class CustomTensorDataset(torch.utils.data.Dataset):
-    """TensorDataset with support of transforms."""
-    def __init__(self, tensors, transform=None):
-        assert all(tensors[0].size(0) == tensor.size(0) for tensor in tensors)
-        self.tensors = tensors
-        self.transform = transform
-        
-    def __getitem__(self, index):
-        x = self.tensors[0][index]
-        y = self.tensors[1][index]
-        if self.transform:
-            x = self.transform(x.numpy().astype(np.uint8))
-        return x, y
-
-    def __len__(self):
-        return self.tensors[0].size(0)
+torch.manual_seed(0)
+np.random.seed(0)
 
 def load_dataset():
     transform = torchvision.transforms.Compose(
                 [
                     torchvision.transforms.ToTensor(),
-                    torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                    torchvision.transforms.Normalize((0.1307, ), (0.3081))
+                    # torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                 ]
             ) 
-    trainset = CIFAR10(
+    trainset = MNIST(
         root=DATA_ROOT,
         train=True,
         download=True,
         transform=transform    
     )
-    testset = CIFAR10(
+    testset = MNIST(
         root=DATA_ROOT,
         train=False,
         download=True,
@@ -48,7 +38,7 @@ def load_dataset():
     )
     return trainset, testset
 
-def create_iid_dataset(num_clients, min_samples=100):
+def create_iid_dataset(num_clients, num_shards=0):
     trainset, testset = load_dataset()
     shuffle_indices = torch.randperm(len(trainset))
     X_train = trainset.data[shuffle_indices]
@@ -91,14 +81,49 @@ def create_noniid_dataset(num_clients, num_shards):
     ]
     return local_datasets, testset
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--type",
+        type=str,
+        default="iid",
+        help="type to split data: iid or noniid"
+    )
+    parser.add_argument(
+        "--num_clients",
+        type=int,
+        default=2,
+        help="number of partitions (clients)"
+    )
+    parser.add_argument(
+        "--num_shards",
+        type=int,
+        default=0,
+        help="number of shards in noniid"
+    )
+
+    args = parser.parse_args()
+    return args
+
 if __name__ == '__main__':
-    local_datasets, testset = create_noniid_dataset(num_clients=2, num_shards=10)
+    args = parse_args()
+
+    if args.type == "iid":
+        create_fn = create_iid_dataset
+    else:
+        create_fn = create_noniid_dataset
+
+    local_datasets, testset = create_fn(num_clients=args.num_clients, num_shards=args.num_shards)
+
     print(len(local_datasets[0]))
     for i, dataset in enumerate(local_datasets):
         labels = dataset[1]
         labels_dist = np.unique(labels, return_counts=True)
         print(f"Dataset {i + 1} size of {len(dataset[0])} samples")
         print("Label dist: ", labels_dist)
-        save_dir = Path(PARTITIONS_PATH + "_noniid") 
+        save_dir = Path(PARTITIONS_PATH + f"_{args.type}") 
         save_dir.mkdir(parents=True, exist_ok=True)
         torch.save(dataset, save_dir / f"train_{i+1}.pt")
+
+
+    print("Test set info: ", len(testset))
