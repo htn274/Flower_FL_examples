@@ -51,7 +51,8 @@ class FlowerClient(fl.client.NumPyClient):
         else:
             num_workers = len(ray.worker.get_resource_ids()["CPU"])
         kwargs = {"num_workers": num_workers, "pin_memory": True, }
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=config['local_batch_size'], shuffle=True, **kwargs)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=config['local_batch_size'], 
+                                                    shuffle=True, **kwargs)
         # Train with local dataset
         train(self.model, trainloader, 
             config["num_epochs"], self.device, config["optim_lr"], verbose=self.verbose)

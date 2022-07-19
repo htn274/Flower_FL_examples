@@ -29,11 +29,11 @@ def get_eval_fn():
 
 def fit_config(rnd):
     # print(f"Round {rnd}")
-    lr = 0.01
+    lr = 0.001
     if rnd > 10: 
-        lr = 0.001
+        lr = 0.0001
     config = {
-        "local_batch_size": 32,
+        "local_batch_size": 10,
         "num_epochs": 5,
         "optim_lr": lr,
     }

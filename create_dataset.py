@@ -62,13 +62,14 @@ def create_noniid_dataset(num_clients, num_shards):
     shard_size = len(trainset) // num_shards
     shard_inputs = list(torch.split(torch.Tensor(X_train), shard_size))
     shard_labels = list(torch.split(torch.Tensor(y_train), shard_size))
+    # print(f"Num shards {num_shards}, {shard_size} samples/shard")
 
     num_classes = np.unique(y_train).shape[0]
     shard_inputs_sorted, shard_labels_sorted = [], []
     for i in range(num_shards // num_classes):
-        for j in range(0, ((num_shards // num_classes) * num_classes)):
-            shard_inputs_sorted.append(shard_inputs[i + j])
-            shard_labels_sorted.append(shard_labels[i + j])
+        for j in range(i, num_shards, (num_shards//num_classes)):
+            shard_inputs_sorted.append(shard_inputs[j])
+            shard_labels_sorted.append(shard_labels[j])
 
     shards_per_clients = num_shards // num_clients
 
