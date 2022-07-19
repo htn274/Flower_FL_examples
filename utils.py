@@ -46,7 +46,7 @@ def load_partition(cid, data_dir='./dataset/'):
 
     return trainset
 
-def train(net, trainloader, epochs, device, lr, cur_epoch=1):
+def train(net, trainloader, epochs, device, lr, cur_epoch=1, verbose=False):
     """ 
     Return number of examples that are trained
     """
@@ -54,7 +54,11 @@ def train(net, trainloader, epochs, device, lr, cur_epoch=1):
     optim = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
 
     net.to(device).train()
-    for epoch in tqdm(range(cur_epoch, cur_epoch + epochs)):
+    for_range = range(cur_epoch, cur_epoch + epochs)
+    if verbose:
+        for_range = tqdm(for_range)
+
+    for epoch in for_range:
         total, correct = 0, 0
         epoch_acc, epoch_loss = 0.0, 0.0
         for i, data in enumerate(trainloader):
@@ -74,7 +78,8 @@ def train(net, trainloader, epochs, device, lr, cur_epoch=1):
 
         epoch_acc = correct / total 
         epoch_loss /= len(trainloader.dataset)
-        print(f"Epoch {epoch}: train loss {epoch_loss}, accuracy {epoch_acc}")
+        if verbose:
+            print(f"Epoch {epoch}: train loss {epoch_loss}, accuracy {epoch_acc}")
 
     return total
 

@@ -1,21 +1,23 @@
 import argparse
+from collections import OrderedDict
+
 import flwr as fl
+import numpy as np
+import torch
 from flwr.common import parameters_to_weights, weights_to_parameters
 from pyrsistent import v
+from torch.utils.data import DataLoader, Dataset
 
-import torch
-import numpy as np
 from models import MnistNet
-from utils import train, test, load_data
-from collections import OrderedDict
-from torch.utils.data import Dataset, DataLoader
+from utils import load_data, test, train
 
 DEVICE = "mps"
 DEFAULT_SERVER_ADDRESS = "[::]:8080"
 
-def get_eval_fn(model):
+def get_eval_fn():
     _, testloader = load_data()
     def centralized_eval(weights):
+        model = MnistNet()
         params_dict = zip(model.state_dict().keys(), weights)
         state_dict = OrderedDict({k: torch.tensor(np.atleast_1d(v)) for k, v in params_dict})
         model.load_state_dict(state_dict, strict=True)
@@ -26,11 +28,14 @@ def get_eval_fn(model):
     return centralized_eval
 
 def fit_config(rnd):
-    print(f"Round {rnd}")
+    # print(f"Round {rnd}")
+    lr = 0.01
+    if rnd > 10: 
+        lr = 0.001
     config = {
-        "epoch_global": str(rnd),
+        "local_batch_size": 32,
         "num_epochs": 5,
-        "optim_lr": 0.01,
+        "optim_lr": lr,
     }
     return config
 
@@ -54,12 +59,11 @@ def main():
     min_sample_size = 2
     min_num_clients = 2
 
-    model = MnistNet()
     strategy = fl.server.strategy.FedAvg(
         fraction_fit = sample_fraction,
         min_fit_clients = min_sample_size,
         min_available_clients=min_num_clients,
-        eval_fn = get_eval_fn(model),
+        eval_fn = get_eval_fn(),
         on_fit_config_fn=fit_config,
     )
     fl.server.start_server(

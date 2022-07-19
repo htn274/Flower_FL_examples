@@ -1,26 +1,24 @@
-from ast import parse
 from tkinter import W
-from typing_extensions import Required
 import flwr as fl
 from collections import OrderedDict
-
-from numpy import partition
 from models import MnistNet
 from utils import train, test, load_partition, load_data
 import torch
 import argparse
-import numpy as np
+import ray
+from flwr.simulation.ray_transport.ray_client_proxy import RayClientProxy
 
 DEFAULT_SERVER_ADDRESS = "[::]:8080"
 DEVICE = "mps"
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, cid, model, trainloader, testloader=None):
+    def __init__(self, cid:int, fed_dir_data:str, verbose=False):
         self.cid = cid
-        self.model = model
-        print(f"Client {cid} has {len(trainloader.dataset)} samples")
-        self.trainloader = trainloader
-        self.testloader = testloader
+        self.fed_dir = fed_dir_data
+        self.model = MnistNet()
+        self.device = DEVICE
+        self.testloader = None
+        self.verbose = verbose
     
     def get_parameters(self):
         """ 
@@ -42,19 +40,34 @@ class FlowerClient(fl.client.NumPyClient):
         Train the local model
         Return a tuple of (trained params, size of local training set, some keys for authentication if available)
         """
-        print(f"Client {self.cid} is training")
+        if self.verbose: 
+            print(f"Client {self.cid} is training")
+        # Get model's weights from server
         self.set_parameters(params)
-        train(self.model, self.trainloader, 
-            config["num_epochs"], DEVICE, config["optim_lr"])
-        return self.get_parameters(), len(self.trainloader.dataset), {}
+        # Create train loader
+        trainset  = load_partition(self.cid, data_dir=self.fed_dir) 
+        if not "CPU" in ray.worker.get_resource_ids():
+            num_workers = 8
+        else:
+            num_workers = len(ray.worker.get_resource_ids()["CPU"])
+        kwargs = {"num_workers": num_workers, "pin_memory": True, }
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=config['local_batch_size'], shuffle=True, **kwargs)
+        # Train with local dataset
+        train(self.model, trainloader, 
+            config["num_epochs"], self.device, config["optim_lr"], verbose=self.verbose)
+            
+        return self.get_parameters(), len(trainset), {}
 
     def evaluate(self, params, config):
-        # No local evaluation
-        # return 0.0, 0, {"accuracy": 0.0}
-        # print(f"Client {self.cid} evaluated on test set")
-        # self.set_parameters(params)
+        """
+        Evaluate the local model with the centralized test.
+        Hence we don't have set_params as in the original flower tutorial
+        """
+        if self.testloader is None:
+            _, self.testloader = load_data()
         loss, acc, num_samples = test(self.model, self.testloader, device=DEVICE)
-        print(f"Test acc: {acc} | num_samples: {num_samples}")
+        if self.verbose:
+            print(f"Test acc: {acc} | num_samples: {num_samples}")
         return float(loss), num_samples, {"accuracy": float(acc)}
 
 if __name__ == '__main__':
@@ -71,13 +84,11 @@ if __name__ == '__main__':
         required=True
     )
     args = parser.parse_args()
-
-    # Load data
-    _, testloader = load_data()
-    trainset  = load_partition(args.cid, data_dir=args.data_dir) 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)    
-    # Load model
-    model = MnistNet()
-    # Start client
-    client = FlowerClient(args.cid, model, trainloader, testloader)
+    ray_init_args = {
+            "ignore_reinit_error": True,
+            "include_dashboard": False,
+        }
+    ray.init(**ray_init_args)
+   # Start client
+    client = FlowerClient(args.cid, args.data_dir, verbose=True)
     fl.client.start_numpy_client(DEFAULT_SERVER_ADDRESS, client)
