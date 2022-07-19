@@ -42,10 +42,9 @@ def load_partition(cid, data_dir='./dataset/'):
     # X_train = X_train.permute(0, 3, 1, 2)
     y_train = torch.Tensor(trainset[1]).type(torch.LongTensor)
     trainset = torch.utils.data.TensorDataset(X_train, y_train)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32)
+    # trainloader = torch.utils.data.DataLoader(trainset, batch_size=32)
 
-    _, testloader = load_data()
-    return trainloader, testloader
+    return trainset
 
 def train(net, trainloader, epochs, device, lr, cur_epoch=1):
     """ 

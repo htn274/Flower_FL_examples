@@ -1,3 +1,4 @@
+import argparse
 import flwr as fl
 from flwr.common import parameters_to_weights, weights_to_parameters
 from pyrsistent import v
@@ -28,18 +29,30 @@ def fit_config(rnd):
     print(f"Round {rnd}")
     config = {
         "epoch_global": str(rnd),
-        "num_epochs": 10,
-        "batch_size": 10,
-        "optim_lr": 0.001,
+        "num_epochs": 5,
+        "optim_lr": 0.01,
     }
     return config
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument(
+        "--rnd",
+        type=int,
+        default=10,
+        help="number of rounds"
+    )
+    
+
+    args = parser.parse_args()
+    return args
 
 def main():
+    args = parse_args()
     sample_fraction = 1.0
     min_sample_size = 2
     min_num_clients = 2
-    rounds = 20
 
     model = MnistNet()
     strategy = fl.server.strategy.FedAvg(
@@ -51,7 +64,7 @@ def main():
     )
     fl.server.start_server(
         DEFAULT_SERVER_ADDRESS,
-        config={"num_rounds": rounds},
+        config={"num_rounds": args.rnd},
         strategy=strategy
     )
     

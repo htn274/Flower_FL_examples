@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 from numpy import partition
 from models import MnistNet
-from utils import train, test, load_partition
+from utils import train, test, load_partition, load_data
 import torch
 import argparse
 import numpy as np
@@ -49,10 +49,12 @@ class FlowerClient(fl.client.NumPyClient):
         return self.get_parameters(), len(self.trainloader.dataset), {}
 
     def evaluate(self, params, config):
+        # No local evaluation
+        # return 0.0, 0, {"accuracy": 0.0}
         # print(f"Client {self.cid} evaluated on test set")
-        self.set_parameters(params)
+        # self.set_parameters(params)
         loss, acc, num_samples = test(self.model, self.testloader, device=DEVICE)
-        # print(f"Test acc: {acc} | num_samples: {num_samples}")
+        print(f"Test acc: {acc} | num_samples: {num_samples}")
         return float(loss), num_samples, {"accuracy": float(acc)}
 
 if __name__ == '__main__':
@@ -71,9 +73,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load data
-    # trainloader, testloader = load_data()
-    trainloader, testloader = load_partition(args.cid, data_dir=args.data_dir) 
-    
+    _, testloader = load_data()
+    trainset  = load_partition(args.cid, data_dir=args.data_dir) 
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True)    
     # Load model
     model = MnistNet()
     # Start client
