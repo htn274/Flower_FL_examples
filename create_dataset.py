@@ -54,6 +54,10 @@ def create_iid_dataset(num_clients, num_shards=0):
     return split_datasets[:num_clients], testset
 
 def create_noniid_dataset(num_clients, num_shards):
+    """
+    The implementation refers to 
+    https://github.com/vaseline555/Federated-Averaging-PyTorch/blob/main/src/utils.py
+    """
     trainset, testset = load_dataset()
     sorted_indices = torch.argsort(torch.Tensor(trainset.targets))
     X_train = trainset.data[sorted_indices]
