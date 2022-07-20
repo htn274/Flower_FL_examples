@@ -31,13 +31,12 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        save_dir: str = None
+        save_dir: Path = None,
         ):
         super().__init__(fraction_fit, fraction_eval, min_fit_clients, min_eval_clients,
         min_available_clients, eval_fn, on_fit_config_fn, on_evaluate_config_fn, accept_failures, 
         initial_parameters, fit_metrics_aggregation_fn, evaluate_metrics_aggregation_fn)
-        self.save_dir = Path(save_dir)
-        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.save_dir = save_dir
 
     def aggregate_fit(
         self,
@@ -49,5 +48,5 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
         if aggregated_weights is not None and self.save_dir is not None:
             # Save aggregated_weights
             print(f"Saving round {rnd} aggregated_weights...")
-            np.savez(self.save_dir / f"round-{rnd}-weights.npz", *aggregated_weights)
+            np.savez(self.save_dir / f"last-weights.npz", *aggregated_weights)
         return aggregated_weights
