@@ -4,12 +4,12 @@ from collections import OrderedDict
 import flwr as fl
 import numpy as np
 import torch
-from flwr.common import parameters_to_weights, weights_to_parameters
-from pyrsistent import v
 from torch.utils.data import DataLoader, Dataset
 
 from models import MnistNet
 from utils import load_data, test, train
+
+from custom_strategy import SaveModelStrategy
 
 DEVICE = "mps"
 DEFAULT_SERVER_ADDRESS = "[::]:8080"
@@ -29,13 +29,10 @@ def get_eval_fn():
 
 def fit_config(rnd):
     # print(f"Round {rnd}")
-    lr = 0.001
-    if rnd > 10: 
-        lr = 0.0001
     config = {
         "local_batch_size": 10,
-        "num_epochs": 5,
-        "optim_lr": lr,
+        "num_epochs": 1,
+        "optim_lr": 0.001 if rnd < 10 else 0.0001,
     }
     return config
 
@@ -59,18 +56,21 @@ def main():
     min_sample_size = 2
     min_num_clients = 2
 
-    strategy = fl.server.strategy.FedAvg(
+    strategy = SaveModelStrategy(
         fraction_fit = sample_fraction,
         min_fit_clients = min_sample_size,
         min_available_clients=min_num_clients,
         eval_fn = get_eval_fn(),
         on_fit_config_fn=fit_config,
+        save_dir='./save_models/'
     )
-    fl.server.start_server(
+    hist = fl.server.start_server(
         DEFAULT_SERVER_ADDRESS,
         config={"num_rounds": args.rnd},
         strategy=strategy
     )
+
+    print('History: ', hist)
     
 
 if __name__ == '__main__':

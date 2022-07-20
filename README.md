@@ -42,3 +42,7 @@ python simulation.py --rnd 50
 - Introduction Slides for FL: https://namhoonlee.github.io/courses/optml/s14-fl.pdf
 - Video tutorial: https://www.youtube.com/watch?v=nBGQQHPkyNY
 - Flower tutorial: https://www.youtube.com/watch?v=Ky6TicaPfVI&t=2656s
+
+## Todo
+
+[ ] Update some results on MNIST

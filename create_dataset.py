@@ -95,6 +95,11 @@ def parse_args():
         help="type to split data: iid or noniid"
     )
     parser.add_argument(
+        "--data_dir",
+        type=str,
+        help="type to split data: iid or noniid"
+    )
+    parser.add_argument(
         "--num_clients",
         type=int,
         default=2,
@@ -126,7 +131,7 @@ if __name__ == '__main__':
         labels_dist = np.unique(labels, return_counts=True)
         print(f"Dataset {i + 1} size of {len(dataset[0])} samples")
         print("Label dist: ", labels_dist)
-        save_dir = Path(PARTITIONS_PATH + f"_{args.type}") 
+        save_dir = Path(f"{args.data_dir}_{args.type}_{args.num_clients}clients") 
         save_dir.mkdir(parents=True, exist_ok=True)
         torch.save(dataset, save_dir / f"train_{i+1}.pt")
 
