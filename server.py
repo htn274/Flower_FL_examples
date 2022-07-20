@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=0.01, help="learning for of local update")
     parser.add_argument("--save_dir", type=str, default=None, help="saving directory for global training information")
     args = parser.parse_args()
-    model_name = f"FedAvg_{args.rnd}_{args.num_clients}_{args.batch_size}_{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
+    model_name = f"FedAvg_R{args.rnd}_C{args.num_clients}_B{args.batch_size}_E{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
     if args.save_dir is not None:
         args.save_dir = Path(args.save_dir) / model_name
         args.save_dir.mkdir(parents=True, exist_ok=True)
