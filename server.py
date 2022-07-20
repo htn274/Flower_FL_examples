@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument("--num_epochs", type=int, default=5, help="number of local epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="learning for of local update")
     parser.add_argument("--save_dir", type=str, default=None, help="saving directory for global training information")
-    parser.add_argument("--fed_dir", type=str, required=True, help='directory storing the datasets of clients')
+    parser.add_argument("--fed_dir", type=str, help='directory storing the datasets of clients')
     args = parser.parse_args()
     model_name = f"FedAvg_R{args.rnd}_C{args.num_clients}_B{args.batch_size}_E{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
     if args.save_dir is not None:
