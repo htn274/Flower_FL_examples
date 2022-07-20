@@ -19,6 +19,8 @@ class MnistNet(nn.Module):
         self.fc1 = nn.Linear(in_features=(hidden_channels * 2) * (7 * 7), out_features=num_hiddens, bias=False)
         self.fc2 = nn.Linear(in_features=num_hiddens, out_features=num_classes, bias=False)
 
+        self.dropout = nn.Dropout(0.25)
+
     def forward(self, x):
         """Compute forward pass."""
         x = self.activation(self.conv1(x))
@@ -29,6 +31,7 @@ class MnistNet(nn.Module):
         x = self.flatten(x)
 
         x = self.activation(self.fc1(x))
+        x = self.dropout(x)
         x = self.fc2(x)
         return x
     
