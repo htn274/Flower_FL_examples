@@ -34,6 +34,7 @@ def get_eval_fn():
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--strategy", type=str, default="FedAvg", help="strategy aggregation for the server")
     parser.add_argument("--rnd", type=int, default=10, help="number of global rounds")
     parser.add_argument("--sample_fraction", type=float, default=1.0, help='fraction of participating clients at each round') 
     parser.add_argument("--num_clients", type=int, default=2, help="total number of clients")
@@ -44,7 +45,7 @@ def parse_args():
     parser.add_argument("--fed_dir", type=str, help='directory storing the datasets of clients')
     parser.add_argument("--lr_decay", type=float, default=1.0, help='decay for learning rate schedule, default is 1.0 that means no decay')
     args = parser.parse_args()
-    model_name = f"FedAvg_R{args.rnd}_C{args.num_clients}_B{args.batch_size}_E{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
+    model_name = f"{args.strategy}_R{args.rnd}_C{args.num_clients}_B{args.batch_size}_E{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
     if args.save_dir is not None:
         args.save_dir = Path(args.save_dir) / model_name
         args.save_dir.mkdir(parents=True, exist_ok=True)

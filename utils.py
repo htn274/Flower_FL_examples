@@ -51,7 +51,8 @@ def train(net, trainloader, epochs, device, lr, cur_epoch=1, verbose=False):
     Return number of examples that are trained
     """
     criterion = nn.CrossEntropyLoss()
-    optim = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
+    # optim = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9)
+    optim = torch.optim.Adam(net.parameters(), lr=lr)
 
     net.to(device).train()
     for_range = range(cur_epoch, cur_epoch + epochs)

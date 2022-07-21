@@ -75,6 +75,18 @@ To know more about arguments, please use '--h'.
 
 ![fig2](figures/10clients.png)
 
+Try with different strategies of FedOpt
+
+decay = 0.5, C = 100, B = 10, E = 5
+global learning rate = local learning rate = 0.001
+
+| Strategy   | Last round | Best Acc@Round |
+| ---------- | ---------- | -------------- |
+| FedAvg     | 0.6438     | 0.7653@36      |
+| FedAdagrad | 0.6499     | 0.6499@50      |
+| FedYogi    | 0.6811     | 0.7289@44      |
+| FedAdam    | 0.6542     | 0.6542@50      |
+
 
 ## Some resources to start Federated Learning
 

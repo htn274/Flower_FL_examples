@@ -1,7 +1,16 @@
+from tkinter import W
 from custom_strategy import SaveModelStrategy
+from models import MnistNet
 from server import parse_args, get_eval_fn, save_hist
 from client import FlowerClient
 import flwr as fl
+from flwr.common.parameter import weights_to_parameters
+
+def get_initial_params():
+    model = MnistNet()
+    weights = [val.cpu().numpy() for _, val in model.state_dict().items()]
+    parameters = weights_to_parameters(weights)
+    return parameters
 
 if __name__ == '__main__':
     args = parse_args()
@@ -19,7 +28,7 @@ if __name__ == '__main__':
         return config
 
 
-    strategy = SaveModelStrategy(
+    strategy = fl.server.strategy.FedYogi(
         fraction_fit=args.sample_fraction,
         fraction_eval=args.sample_fraction,
         min_fit_clients=args.num_clients*args.sample_fraction,
@@ -28,7 +37,11 @@ if __name__ == '__main__':
         on_fit_config_fn=fit_config,
         accept_failures=False,
         eval_fn=get_eval_fn(), # centralised testset evaluation of global model
-        save_dir=args.save_dir,
+        # save_dir=args.save_dir,
+        eta=0.001,
+        eta_l=0.001,
+        tau=0.001,
+        initial_parameters=get_initial_params()
     )
     def client_fn(cid: str):
         # create a single client instance
