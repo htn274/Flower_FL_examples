@@ -73,6 +73,7 @@ To know more about arguments, please use '--h'.
 | 0.5   | iid               | 0.918      | 0.9277@49      |
 | 0.5   | non iid           | 0.6438     | 0.7653@37      |
 
+![fig2](figures/10clients.png)
 
 
 ## Some resources to start Federated Learning
