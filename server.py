@@ -42,6 +42,7 @@ def parse_args():
     parser.add_argument("--lr", type=float, default=0.01, help="learning for of local update")
     parser.add_argument("--save_dir", type=str, default=None, help="saving directory for global training information")
     parser.add_argument("--fed_dir", type=str, help='directory storing the datasets of clients')
+    parser.add_argument("--lr_decay", type=float, default=1.0, help='decay for learning rate schedule, default is 1.0 that means no decay')
     args = parser.parse_args()
     model_name = f"FedAvg_R{args.rnd}_C{args.num_clients}_B{args.batch_size}_E{args.num_epochs}_{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}"
     if args.save_dir is not None:
@@ -61,7 +62,8 @@ def main():
         config = {
             "local_batch_size": args.batch_size,
             "num_epochs": args.num_epochs,
-            "optim_lr": args.lr
+            # "optim_lr": args.lr
+            "optim_lr": args.lr if rnd <= 10 else args.lr * args.lr_decay
         }
         return config
 

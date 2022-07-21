@@ -47,15 +47,33 @@ To know more about arguments, please use '--h'.
 
 ## Some results
 
-Learning rate of each client is 0.0001
-Strategy: FedAvg
+2 clients
+- Learning rate of each client is 0.001
+- Strategy: FedAvg
+- B=32, E = 3
 
-| #Clients   | num_epochs   |batch_size   |Data distribution   |Last round   | Best Acc|
-|---|---|---|---|---|---|
-|2   |3   |32   |iid   | 0.9044  | 0.9702 |
-|2   |3   |32   |non iid   | 0.5012 | 0.5635 |
-|100   |5  |10   |iid   | 0.8022  | 0.8443 |
-|100   |5   |10   |non iid   |  0.4585 | 0.5719 |
+| Decay | Data distribution | Last round | Best Acc@Round |
+| ----- | ----------------- | ---------- | -------------- |
+| 1.0   | iid               | 0.9388     | 0.9537@19      |
+| 1.0   | non iid           | 0.8686     | 0.8925@36      |
+| 0.5   | iid               | 0.9730     | 0.9779@47      |
+| 0.5   | non iid           | 0.9376     | 0.9431@48      |
+
+![fig1](figures/2clients.png)
+
+10 clients
+- Learning rate of each client is 0.001
+- Strategy: FedAvg
+- B=10, E = 5
+
+| Decay | Data distribution | Last round | Best Acc@Round |
+| ----- | ----------------- | ---------- | -------------- |
+| 1.0   | iid               | 0.838      | 0.9096@19      |
+| 1.0   | non iid           | 0.5991     | 0.6953@31      |
+| 0.5   | iid               | 0.918      | 0.9277@49      |
+| 0.5   | non iid           | 0.6438     | 0.7653@37      |
+
+
 
 ## Some resources to start Federated Learning
 

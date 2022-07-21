@@ -13,9 +13,11 @@ if __name__ == '__main__':
         config = {
             "local_batch_size": args.batch_size,
             "num_epochs": args.num_epochs,
-            "optim_lr": args.lr
+            # "optim_lr": args.lr
+            "optim_lr": args.lr if rnd <= 10 else args.lr * args.lr_decay
         }
         return config
+
 
     strategy = SaveModelStrategy(
         fraction_fit=args.sample_fraction,
